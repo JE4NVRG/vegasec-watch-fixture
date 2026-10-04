@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// VegaSec continuous-watch LIVE FIXTURE target (v4).
+/// VegaSec continuous-watch LIVE FIXTURE target (v5).
 ///
 /// This repository exists so the paid Watch loop can be exercised against a real public
 /// repository that can actually receive a new commit: change -> watch detects -> re-scan ->
@@ -24,26 +24,23 @@ contract WatchVault {
         emit Deposit(msg.sender, msg.value);
     }
 
-    /// FIXTURE v4: authorization by tx.origin, state update after the external call.
+    /// FIXTURE v5: back to checks-effects-interactions (state written before the external call).
+    /// Authorization still goes through tx.origin, so the access-control finding stays open.
     function withdraw() external {
         require(tx.origin == owner, "not owner");
         uint256 amount = balances[msg.sender];
         require(amount > 0, "empty");
+        balances[msg.sender] = 0;
         (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "send failed");
-        balances[msg.sender] = 0;
         emit Withdrawal(msg.sender, amount);
     }
 
-    /// FIXTURE v4: unrestricted ownership transfer (anyone can take the contract).
+    /// FIXTURE v5: ownership transfer is now guarded.
     function setOwner(address newOwner) external {
+        require(msg.sender == owner, "not owner");
+        require(newOwner != address(0), "zero owner");
         owner = newOwner;
-    }
-
-    /// FIXTURE v4: drains the contract to the caller; return value ignored.
-    function sweep() external {
-        (bool ok, ) = msg.sender.call{value: address(this).balance}("");
-        ok;
     }
 
     receive() external payable {}
