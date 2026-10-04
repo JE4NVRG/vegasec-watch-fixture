@@ -24,13 +24,13 @@ contract WatchVault {
         emit Deposit(msg.sender, msg.value);
     }
 
-    /// State is written before the external call (checks-effects-interactions).
+    /// FIXTURE v2: the state update now happens AFTER the external call.
     function withdraw() external {
         uint256 amount = balances[msg.sender];
         require(amount > 0, "empty");
-        balances[msg.sender] = 0;
         (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "send failed");
+        balances[msg.sender] = 0;
         emit Withdrawal(msg.sender, amount);
     }
 
