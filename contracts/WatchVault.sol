@@ -24,8 +24,9 @@ contract WatchVault {
         emit Deposit(msg.sender, msg.value);
     }
 
-    /// FIXTURE v2: the state update now happens AFTER the external call.
+    /// FIXTURE v3: authorization by tx.origin and state update after the external call.
     function withdraw() external {
+        require(tx.origin == owner, "not owner");
         uint256 amount = balances[msg.sender];
         require(amount > 0, "empty");
         (bool sent, ) = msg.sender.call{value: amount}("");
